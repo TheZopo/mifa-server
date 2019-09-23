@@ -2,11 +2,14 @@ package fr.mifa.server;
 
 import fr.mifa.server.network.Server;
 import org.apache.commons.cli.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Scanner;
 
 public class Main {
     private static Thread mainThread;
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
         System.out.println("Hello World mifa-server !");
@@ -50,7 +53,7 @@ public class Main {
                     server.bind(port);
                 }
                 catch (NumberFormatException ex) {
-                    //TODO
+                    logger.error(ex.toString());
                 }
             }
             else if (portStr == null) {
