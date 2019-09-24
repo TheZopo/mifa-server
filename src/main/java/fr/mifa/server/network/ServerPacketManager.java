@@ -1,11 +1,13 @@
 package fr.mifa.server.network;
 
+import fr.mifa.core.models.User;
+import fr.mifa.core.network.protocol.*;
+import fr.mifa.server.services.RoomService;
+import fr.mifa.server.services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import fr.mifa.core.network.PacketManager;
-import fr.mifa.core.network.protocol.AuthPacket;
-import fr.mifa.core.network.protocol.Packet;
 
 import java.net.Socket;
 
@@ -20,7 +22,44 @@ public class ServerPacketManager extends PacketManager {
     @Override
     protected void processPacket(Packet packet) {
         if(packet instanceof AuthPacket) {
-            logger.info("AuthPacket");
+            logger.debug("Received AuthPacket");
+            AuthPacket authPacket = (AuthPacket)packet;
+            User user = new User(authPacket.getNickname(), this);
+            this.setUser(user);
+            UserService.INSTANCE.addUser(user);
+        }
+        else if (packet instanceof JoinRoomPacket) {
+            logger.debug("Received JoinRoomPacket");
+            JoinRoomPacket joinRoomPacket = (JoinRoomPacket)packet;
+            if (this.getUser() != null) {
+                RoomService.INSTANCE.joinRoom(this.getUser(), joinRoomPacket.getRoomId());
+            }
+            else {
+                logger.warn("User is not authenticated yet - can't join room");
+            }
+        }
+        else if (packet instanceof MessagePacket) {
+            logger.debug("Received MessagePacket");
+            MessagePacket messagePacket = (MessagePacket) packet;
+            if (this.getUser() != null) {
+                RoomService.INSTANCE.broadcastMessage(messagePacket.getRoomId(), messagePacket.getMessage());
+            }
+            else {
+                logger.warn("User is not authenticated yet - can't send message");
+            }
+        }
+        else if (packet instanceof LeaveRoomPacket) {
+            logger.debug("Received LeaveRoomPacket");
+            LeaveRoomPacket leaveRoomPacket = (LeaveRoomPacket) packet;
+            if (this.getUser() != null) {
+                RoomService.INSTANCE.leaveRoom(this.getUser(), leaveRoomPacket.getRoomId());
+            }
+            else {
+                logger.warn("User is not authenticated yet - can't send message");
+            }
+        }
+        else {
+            logger.warn("Received unknown packet :" + packet.getClass().getName());
         }
     }
 }
