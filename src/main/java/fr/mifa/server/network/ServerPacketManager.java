@@ -42,7 +42,7 @@ public class ServerPacketManager extends PacketManager {
             logger.debug("Received MessagePacket");
             MessagePacket messagePacket = (MessagePacket) packet;
             if (this.getUser() != null) {
-                RoomService.INSTANCE.broadcastMessage(messagePacket.getRoomId(), messagePacket.getMessage());
+                RoomService.INSTANCE.broadcastMessage(messagePacket.getMessage());
             }
             else {
                 logger.warn("User is not authenticated yet - can't send message");

@@ -50,8 +50,8 @@ public enum RoomService {
         }
     }
 
-    public void broadcastMessage(int roomId, Message message) {
-        this.broadcastPacket(roomId, new MessageSentPacket(roomId, message));
+    public void broadcastMessage(Message message) {
+        this.broadcastPacket(message.getRoomId(), new MessageSentPacket(message));
     }
 
     public void broadcastPacket(int roomId, Packet packet) {
