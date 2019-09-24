@@ -37,6 +37,7 @@ public enum RoomService {
             rooms.put(room.getId(), room);
         }
         room.getUsers().add(user);
+        logger.info(user.getNickname() + " joined room " + room.getName());
         this.broadcastPacket(roomId, new JoinedRoomPacket(user.getNickname(), roomId));
     }
 
@@ -44,6 +45,7 @@ public enum RoomService {
         Room room = this.rooms.get(roomId);
         if (room != null) {
             room.getUsers().remove(user);
+            logger.info(user.getNickname() + " left room " + room.getName());
             this.broadcastPacket(roomId, new LeftRoomPacket(user.getNickname(), roomId));
         } else {
             logger.warn("Room " + roomId + " does not exist");
@@ -56,6 +58,7 @@ public enum RoomService {
 
     public void broadcastPacket(int roomId, Packet packet) {
         Room room = this.rooms.get(roomId);
+        logger.info("Broadcasting  " + packet.getClass().getName() + " to room " + room.getName());
         if (room != null) {
             for (User user: room.getUsers()) {
                 user.getPacketManager().send(packet);
