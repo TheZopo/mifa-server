@@ -1,4 +1,5 @@
 package fr.mifa.server.network;
+import fr.mifa.core.network.protocol.HelloWorldPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,9 +65,10 @@ public enum Server {
             try {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Connexion from:" + clientSocket.getInetAddress());
-                PacketManager client = new ServerPacketManager();
+                PacketManager client = new ServerPacketManager(clientSocket);
                 clients.add(client);
                 client.start();
+                client.send(new HelloWorldPacket());
             }
             catch (SocketException ex) {
                 logger.error(ex.toString());
