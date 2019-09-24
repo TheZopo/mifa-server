@@ -1,5 +1,6 @@
 package fr.mifa.server.network;
 
+import fr.mifa.core.models.Message;
 import fr.mifa.core.models.User;
 import fr.mifa.core.network.protocol.*;
 import fr.mifa.server.services.RoomService;
@@ -42,7 +43,12 @@ public class ServerPacketManager extends PacketManager {
             logger.debug("Received MessagePacket");
             MessagePacket messagePacket = (MessagePacket) packet;
             if (this.getUser() != null) {
-                RoomService.INSTANCE.broadcastMessage(messagePacket.getMessage());
+                Message message = messagePacket.getMessage();
+                User user = this.getUser();
+                // fill more detail about message origin for other clients
+                message.setAuthorName(user.getNickname());
+                message.setAuthorId(user.getId());
+                RoomService.INSTANCE.broadcastMessage(message);
             }
             else {
                 logger.warn("User is not authenticated yet - can't send message");
@@ -61,5 +67,12 @@ public class ServerPacketManager extends PacketManager {
         else {
             logger.warn("Received unknown packet :" + packet.getClass().getName());
         }
+    }
+
+    @Override
+    protected void onDisconnected() {
+        super.onDisconnected();
+
+        UserService.INSTANCE.removeUser(this.getUser());
     }
 }
