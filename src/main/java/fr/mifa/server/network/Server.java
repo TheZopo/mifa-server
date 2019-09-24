@@ -1,7 +1,4 @@
 package fr.mifa.server.network;
-
-import fr.mifa.core.network.Client;
-import fr.mifa.core.network.IClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +8,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+
+import fr.mifa.core.network.PacketManager;
 
 
 public enum Server {
@@ -22,7 +21,7 @@ public enum Server {
     private static final int DEFAULT_PORT = 2021;
 
     ServerSocket serverSocket;
-    ArrayList<IClient> clients;
+    ArrayList<PacketManager> clients;
 
     Server() {
         try {
@@ -65,7 +64,7 @@ public enum Server {
             try {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Connexion from:" + clientSocket.getInetAddress());
-                Client client = new Client(clientSocket);
+                PacketManager client = new ServerPacketManager();
                 clients.add(client);
                 client.start();
             }
