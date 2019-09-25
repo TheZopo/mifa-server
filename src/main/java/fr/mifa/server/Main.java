@@ -1,6 +1,7 @@
 package fr.mifa.server;
 
 import fr.mifa.server.network.Server;
+import fr.mifa.server.utils.ServerProperties;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,10 +45,17 @@ public class Main {
         else {
             String address = cmd.getOptionValue("a");
             String portStr = cmd.getOptionValue("p");
-            if (address == null && portStr == null) {
+            // fallback to settings file
+            if (address == null) {
+                address = ServerProperties.INSTANCE.get("HOST", "");
+            }
+            if (portStr == null) {
+                portStr = ServerProperties.INSTANCE.get("PORT", "");
+            }
+            if ("".equals(address) && "".equals(portStr)) {
                 server.bind();
             }
-            else if (address == null) {
+            else if ("".equals(address)) {
                 try {
                     int port = Integer.parseInt(portStr);
                     server.bind(port);
@@ -56,7 +64,7 @@ public class Main {
                     logger.error(ex.toString());
                 }
             }
-            else if (portStr == null) {
+            else if ("".equals(portStr)) {
                 server.bind(address);
             }
         }
