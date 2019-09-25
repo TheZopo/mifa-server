@@ -27,4 +27,8 @@ public enum UserService {
         logger.info("User " + user.getNickname() + " disconnected");
         users.remove(user);
     }
+
+    public boolean userExists(String nickname) {
+        return users.stream().anyMatch(u -> nickname.equals(u.getNickname()));
+    }
 }

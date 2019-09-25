@@ -15,9 +15,9 @@ public enum RoomService {
 
     private static final Logger logger = LoggerFactory.getLogger(RoomService.class);
 
-    HashMap<Integer, Room> rooms;
+    HashMap<String, Room> rooms;
 
-    public HashMap<Integer, Room> getRooms() {
+    public HashMap<String, Room> getRooms() {
         return rooms;
     }
 
@@ -29,44 +29,44 @@ public enum RoomService {
         user.getPacketManager().send(new RoomListPacket(new ArrayList<Room>(rooms.values())));
     }
 
-    public void joinRoom(User user, int roomId) {
-        Room room = this.rooms.get(roomId);
+    public void joinRoom(User user, String roomName) {
+        Room room = this.rooms.get(roomName);
         if (room == null) {
             //room does not exist yet, create it
-            room = new Room();
-            rooms.put(room.getId(), room);
+            room = new Room(roomName);
+            rooms.put(roomName, room);
+        }
+        if (UserService.INSTANCE.userExists(roomName) && room.getUsers().size() == 2) {
+            return;
         }
         room.getUsers().add(user);
         logger.info(user.getNickname() + " joined room " + room.getName());
-        this.broadcastPacket(roomId, new JoinedRoomPacket(user.getNickname(), roomId));
+        this.broadcastPacket(room, new JoinedRoomPacket(user.getNickname(), room.getId()));
     }
 
-    public void leaveRoom(User user, int roomId) {
-        Room room = this.rooms.get(roomId);
+    public void leaveRoom(User user, String roomName) {
+        Room room = this.rooms.get(roomName);
         if (room != null) {
             room.getUsers().remove(user);
             logger.info(user.getNickname() + " left room " + room.getName());
-            this.broadcastPacket(roomId, new LeftRoomPacket(user.getNickname(), roomId));
+            this.broadcastPacket(room, new LeftRoomPacket(user.getNickname(), room.getId()));
         } else {
-            logger.warn("Room " + roomId + " does not exist");
+            logger.warn("Room " + roomName + " does not exist");
         }
     }
 
     public void broadcastMessage(Message message) {
-        this.broadcastPacket(message.getRoomId(), new MessageSentPacket(message));
+        Room room = this.rooms.get(message.getRoomName());
+        if (room != null) {
+            this.broadcastPacket(room, new MessageSentPacket(message));
+            room.getHistory().add(message);
+        }
     }
 
-    public void broadcastPacket(int roomId, Packet packet) {
-        Room room = this.rooms.get(roomId);
-        logger.info("Broadcasting  " + packet.getClass().getName() + " to room " + room.getName());
-        if (room != null) {
-            for (User user: room.getUsers()) {
-                user.getPacketManager().send(packet);
-            }
+    public void broadcastPacket(Room room, Packet packet) {
+        logger.info("Broadcasting  " + packet.getClass().getName() + " to room " + room.getId());
+        for (User user: room.getUsers()) {
+            user.getPacketManager().send(packet);
         }
-        else {
-            logger.warn("Room " + roomId + " does not exist");
-        }
-
     }
 }

@@ -25,15 +25,20 @@ public class ServerPacketManager extends PacketManager {
         if(packet instanceof AuthPacket) {
             logger.debug("Received AuthPacket");
             AuthPacket authPacket = (AuthPacket)packet;
-            User user = new User(authPacket.getNickname(), this);
-            this.setUser(user);
-            UserService.INSTANCE.addUser(user);
+            if (!UserService.INSTANCE.userExists(authPacket.getNickname())) {
+                User user = new User(authPacket.getNickname(), this);
+                this.setUser(user);
+                UserService.INSTANCE.addUser(user);
+            }
+            else {
+                this.send(new DisconnectPacket("A user with the same nickname is already connected"));
+            }
         }
         else if (packet instanceof JoinRoomPacket) {
             logger.debug("Received JoinRoomPacket");
             JoinRoomPacket joinRoomPacket = (JoinRoomPacket)packet;
             if (this.getUser() != null) {
-                RoomService.INSTANCE.joinRoom(this.getUser(), joinRoomPacket.getRoomId());
+                RoomService.INSTANCE.joinRoom(this.getUser(), joinRoomPacket.getRoomName());
             }
             else {
                 logger.warn("User is not authenticated yet - can't join room");
@@ -58,7 +63,7 @@ public class ServerPacketManager extends PacketManager {
             logger.debug("Received LeaveRoomPacket");
             LeaveRoomPacket leaveRoomPacket = (LeaveRoomPacket) packet;
             if (this.getUser() != null) {
-                RoomService.INSTANCE.leaveRoom(this.getUser(), leaveRoomPacket.getRoomId());
+                RoomService.INSTANCE.leaveRoom(this.getUser(), leaveRoomPacket.getRoomName());
             }
             else {
                 logger.warn("User is not authenticated yet - can't send message");
