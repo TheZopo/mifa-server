@@ -8,7 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 public enum RoomService {
     INSTANCE;
@@ -26,7 +28,11 @@ public enum RoomService {
     }
 
     public void sendRoomsList(User user) {
-        user.getPacketManager().send(new RoomListPacket(new ArrayList<Room>(rooms.values())));
+        Collection<Room> userRooms = rooms.values()
+                .stream()
+                .filter(p -> p.getUsers().contains(user))
+                .collect(Collectors.toList());
+        user.getPacketManager().send(new RoomListPacket(new ArrayList<Room>(userRooms)));
     }
 
     public void joinRoom(User user, String roomName) {

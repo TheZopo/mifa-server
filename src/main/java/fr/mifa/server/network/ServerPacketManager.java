@@ -29,6 +29,7 @@ public class ServerPacketManager extends PacketManager {
                 User user = new User(authPacket.getNickname(), this);
                 this.setUser(user);
                 UserService.INSTANCE.addUser(user);
+                RoomService.INSTANCE.sendRoomsList(user);
             }
             else {
                 this.send(new DisconnectPacket("A user with the same nickname is already connected"));
