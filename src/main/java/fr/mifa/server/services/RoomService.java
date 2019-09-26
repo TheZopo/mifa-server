@@ -47,7 +47,7 @@ public enum RoomService {
         }
         room.getUsers().add(user);
         logger.info(user.getNickname() + " joined room " + room.getName());
-        this.broadcastPacket(room, new JoinedRoomPacket(user.getNickname(), room.getId()));
+        this.broadcastPacket(room, new JoinedRoomPacket(user.getNickname(), room));
     }
 
     public void leaveRoom(User user, String roomName) {
