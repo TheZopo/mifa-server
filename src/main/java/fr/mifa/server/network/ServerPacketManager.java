@@ -26,12 +26,12 @@ public class ServerPacketManager extends PacketManager {
         if(packet instanceof AuthPacket) {
             logger.debug("Received AuthPacket");
             AuthPacket authPacket = (AuthPacket)packet;
-            Optional<User> user = UserService.INSTANCE.getUser(authPacket.getNickname());
+            Optional<User> user = UserService.getInstance().getUser(authPacket.getNickname());
             if (!user.isPresent()) {
                 User nuser = new User(authPacket.getNickname(), this);
                 this.setUser(nuser);
-                UserService.INSTANCE.addUser(nuser);
-                RoomService.INSTANCE.sendRoomsList(nuser);
+                UserService.getInstance().addUser(nuser);
+                RoomService.getInstance().sendRoomsList(nuser);
             }
             else {
                 if (user.get().isConnected()) {
@@ -40,7 +40,7 @@ public class ServerPacketManager extends PacketManager {
                 else {
                     this.setUser(user.get());
                     user.get().setPacketManager(this);
-                    RoomService.INSTANCE.sendRoomsList(user.get());
+                    RoomService.getInstance().sendRoomsList(user.get());
                 }
             }
         }
@@ -48,7 +48,7 @@ public class ServerPacketManager extends PacketManager {
             logger.debug("Received JoinRoomPacket");
             JoinRoomPacket joinRoomPacket = (JoinRoomPacket)packet;
             if (this.getUser() != null) {
-                RoomService.INSTANCE.joinRoom(this.getUser(), joinRoomPacket.getRoomName());
+                RoomService.getInstance().joinRoom(this.getUser(), joinRoomPacket.getRoomName());
             }
             else {
                 logger.warn("User is not authenticated yet - can't join room");
@@ -63,7 +63,7 @@ public class ServerPacketManager extends PacketManager {
                 // fill more detail about message origin for other clients
                 message.setAuthorName(user.getNickname());
                 message.setAuthorId(user.getId());
-                RoomService.INSTANCE.broadcastMessage(message);
+                RoomService.getInstance().broadcastMessage(message);
             }
             else {
                 logger.warn("User is not authenticated yet - can't send message");
@@ -73,7 +73,7 @@ public class ServerPacketManager extends PacketManager {
             logger.debug("Received LeaveRoomPacket");
             LeaveRoomPacket leaveRoomPacket = (LeaveRoomPacket) packet;
             if (this.getUser() != null) {
-                RoomService.INSTANCE.leaveRoom(this.getUser(), leaveRoomPacket.getRoomName());
+                RoomService.getInstance().leaveRoom(this.getUser(), leaveRoomPacket.getRoomName());
             }
             else {
                 logger.warn("User is not authenticated yet - can't send message");

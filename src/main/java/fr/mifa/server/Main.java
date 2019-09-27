@@ -1,6 +1,8 @@
 package fr.mifa.server;
 
 import fr.mifa.server.network.Server;
+import fr.mifa.server.services.RoomService;
+import fr.mifa.server.services.UserService;
 import fr.mifa.server.utils.ServerProperties;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
@@ -20,6 +22,10 @@ public class Main {
         {
             public void run()
             {
+                if (ServerProperties.INSTANCE.get("STORAGE", "true").equals("true")) {
+                    UserService.getInstance().saveState();
+                    RoomService.getInstance().saveState();
+                }
                 System.out.println("Shutting down...");
                 Main.mainThread.interrupt();
             }
@@ -69,6 +75,10 @@ public class Main {
             }
         }
         Thread serverThread = new Thread(server::listen);
+        if (ServerProperties.INSTANCE.get("STORAGE", "true").equals("true")) {
+            UserService.getInstance().loadState();
+            RoomService.getInstance().loadState();
+        }
         serverThread.start();
         Scanner scanner = new Scanner(System.in);
         while(true) {
