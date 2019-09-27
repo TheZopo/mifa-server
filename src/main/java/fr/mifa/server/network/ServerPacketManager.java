@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import fr.mifa.core.network.PacketManager;
 
 import java.net.Socket;
+import java.util.Optional;
 
 public class ServerPacketManager extends PacketManager {
 
@@ -25,14 +26,22 @@ public class ServerPacketManager extends PacketManager {
         if(packet instanceof AuthPacket) {
             logger.debug("Received AuthPacket");
             AuthPacket authPacket = (AuthPacket)packet;
-            if (!UserService.INSTANCE.userExists(authPacket.getNickname())) {
-                User user = new User(authPacket.getNickname(), this);
-                this.setUser(user);
-                UserService.INSTANCE.addUser(user);
-                RoomService.INSTANCE.sendRoomsList(user);
+            Optional<User> user = UserService.INSTANCE.getUser(authPacket.getNickname());
+            if (!user.isPresent()) {
+                User nuser = new User(authPacket.getNickname(), this);
+                this.setUser(nuser);
+                UserService.INSTANCE.addUser(nuser);
+                RoomService.INSTANCE.sendRoomsList(nuser);
             }
             else {
-                this.send(new DisconnectPacket("A user with the same nickname is already connected"));
+                if (user.get().isConnected()) {
+                    this.send(new DisconnectPacket("A user with the same nickname is already connected"));
+                }
+                else {
+                    this.setUser(user.get());
+                    user.get().setPacketManager(this);
+                    RoomService.INSTANCE.sendRoomsList(user.get());
+                }
             }
         }
         else if (packet instanceof JoinRoomPacket) {
@@ -79,6 +88,6 @@ public class ServerPacketManager extends PacketManager {
     protected void onDisconnected() {
         super.onDisconnected();
 
-        UserService.INSTANCE.removeUser(this.getUser());
+        this.getUser().setConnected(false);
     }
 }

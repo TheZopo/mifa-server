@@ -42,7 +42,7 @@ public enum RoomService {
             room = new Room(roomName);
             rooms.put(roomName, room);
         }
-        if (UserService.INSTANCE.userExists(roomName) && room.getUsers().size() == 2) {
+        if (UserService.INSTANCE.getUser(roomName).isPresent() && room.getUsers().size() == 2) {
             return;
         }
         room.getUsers().add(user);
@@ -55,7 +55,9 @@ public enum RoomService {
         if (room != null) {
             room.getUsers().remove(user);
             logger.info(user.getNickname() + " left room " + room.getName());
-            this.broadcastPacket(room, new LeftRoomPacket(user.getNickname(), room.getId()));
+            Packet packet = new LeftRoomPacket(user.getNickname(), room.getId());
+            user.getPacketManager().send(packet);
+            this.broadcastPacket(room, packet);
         } else {
             logger.warn("Room " + roomName + " does not exist");
         }

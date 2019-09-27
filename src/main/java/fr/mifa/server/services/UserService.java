@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 public enum UserService {
     INSTANCE;
@@ -28,7 +29,9 @@ public enum UserService {
         users.remove(user);
     }
 
-    public boolean userExists(String nickname) {
-        return users.stream().anyMatch(u -> nickname.equals(u.getNickname()));
+    public Optional<User> getUser(String nickname) {
+        return users.stream()
+                    .filter(u -> nickname.equals(u.getNickname()))
+                    .findFirst();
     }
 }
