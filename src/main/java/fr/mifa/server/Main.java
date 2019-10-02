@@ -1,12 +1,18 @@
 package fr.mifa.server;
 
 import fr.mifa.server.network.Server;
+import fr.mifa.server.services.RoomService;
+import fr.mifa.server.services.UserService;
+import fr.mifa.server.utils.ServerProperties;
 import org.apache.commons.cli.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Scanner;
 
 public class Main {
     private static Thread mainThread;
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
         System.out.println("Hello World mifa-server !");
@@ -16,6 +22,10 @@ public class Main {
         {
             public void run()
             {
+                if (ServerProperties.INSTANCE.get("STORAGE", "true").equals("true")) {
+                    UserService.getInstance().saveState();
+                    RoomService.getInstance().saveState();
+                }
                 System.out.println("Shutting down...");
                 Main.mainThread.interrupt();
             }
@@ -41,23 +51,34 @@ public class Main {
         else {
             String address = cmd.getOptionValue("a");
             String portStr = cmd.getOptionValue("p");
-            if (address == null && portStr == null) {
+            // fallback to settings file
+            if (address == null) {
+                address = ServerProperties.INSTANCE.get("HOST", "");
+            }
+            if (portStr == null) {
+                portStr = ServerProperties.INSTANCE.get("PORT", "");
+            }
+            if ("".equals(address) && "".equals(portStr)) {
                 server.bind();
             }
-            else if (address == null) {
+            else if ("".equals(address)) {
                 try {
                     int port = Integer.parseInt(portStr);
                     server.bind(port);
                 }
                 catch (NumberFormatException ex) {
-                    //TODO
+                    logger.error(ex.toString());
                 }
             }
-            else if (portStr == null) {
+            else if ("".equals(portStr)) {
                 server.bind(address);
             }
         }
         Thread serverThread = new Thread(server::listen);
+        if (ServerProperties.INSTANCE.get("STORAGE", "true").equals("true")) {
+            UserService.getInstance().loadState();
+            RoomService.getInstance().loadState();
+        }
         serverThread.start();
         Scanner scanner = new Scanner(System.in);
         while(true) {

@@ -1,7 +1,7 @@
 package fr.mifa.server.network;
-
-import fr.mifa.core.network.Client;
-import fr.mifa.core.network.IClient;
+import fr.mifa.core.network.protocol.HelloWorldPacket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -10,22 +10,26 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
 
+import fr.mifa.core.network.PacketManager;
+
 
 public enum Server {
     INSTANCE;
+
+    final Logger logger = LoggerFactory.getLogger(Server.class);
 
     private static final String DEFAULT_ADDRESS = "localhost";
     private static final int DEFAULT_PORT = 2021;
 
     ServerSocket serverSocket;
-    ArrayList<IClient> clients;
+    ArrayList<PacketManager> clients;
 
     Server() {
         try {
             this.serverSocket = new ServerSocket();
         }
         catch (IOException ex) {
-            //TODO
+            logger.error(ex.toString());
         }
         this.clients = new ArrayList<>();
     }
@@ -35,7 +39,7 @@ public enum Server {
             serverSocket.bind(new InetSocketAddress(address, port));
         }
         catch (IOException ex) {
-            //TODO
+            logger.error(ex.toString());
         }
     }
 
@@ -53,7 +57,7 @@ public enum Server {
 
     public void listen() {
         if (serverSocket == null) {
-            //TODO log
+            logger.warn("Attempted to listen on a null server socket");
             return;
         }
         System.out.println("Listening");
@@ -61,29 +65,31 @@ public enum Server {
             try {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Connexion from:" + clientSocket.getInetAddress());
-                Client client = new Client(clientSocket);
+                PacketManager client = new ServerPacketManager(clientSocket);
                 clients.add(client);
                 client.start();
+                client.send(new HelloWorldPacket());
             }
             catch (SocketException ex) {
+                logger.error(ex.toString());
                 return;
             }
             catch (IOException ex) {
-                //TODO
+                logger.error(ex.toString());
             }
         }
     }
 
     public void close() {
         if (serverSocket == null) {
-            //TODO log
+            logger.warn("Attempted to close a null server socket");
             return;
         }
         try {
             serverSocket.close();
         }
         catch (IOException ex) {
-            //TODO
+            logger.error(ex.toString());
         }
     }
 }
