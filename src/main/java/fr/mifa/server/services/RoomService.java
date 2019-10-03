@@ -65,8 +65,9 @@ public class RoomService extends AbstractService {
         Room room = this.rooms.get(roomName);
         if (room == null) {
             //room does not exist yet, create it
-            room = new Room(roomName);
-            room.setPacketManager(new ServerRoomPacketManager("224.0.0.1", room.getId() + 3000));
+            room = new Room(roomName, "224.0.0.1");
+            room.setPacketManager(new ServerRoomPacketManager(room));
+            System.out.println("IP: " + room.getAddress() +", port: " + room.getPort());
 
             rooms.put(roomName, room);
         }
@@ -77,9 +78,6 @@ public class RoomService extends AbstractService {
         logger.info(user.getNickname() + " joined room " + room.getName());
 
         JoinedRoomPacket packet = new JoinedRoomPacket(user.getNickname(), room);
-        packet.setAddress("224.0.0.1");
-        packet.setPort(room.getId() + 3000);
-
         user.getPacketManager().send(packet);
     }
 
