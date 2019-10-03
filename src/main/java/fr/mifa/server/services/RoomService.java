@@ -67,7 +67,6 @@ public class RoomService extends AbstractService {
             //room does not exist yet, create it
             room = new Room(roomName, "224.0.0.1");
             room.setPacketManager(new ServerRoomPacketManager(room));
-            System.out.println("IP: " + room.getAddress() +", port: " + room.getPort());
 
             rooms.put(roomName, room);
         }
@@ -93,6 +92,13 @@ public class RoomService extends AbstractService {
         }
     }
 
+    public void receivedMessage(Message message) {
+        Room room = this.rooms.get(message.getRoomName());
+        if (room != null) {
+            room.getHistory().add(message);
+        }
+    }
+
     @Override
     public void saveState() {
         ObjectOutputStream os = this.getOutputStream();
@@ -113,6 +119,9 @@ public class RoomService extends AbstractService {
         if (os != null) {
             try {
                 this.rooms = (HashMap<String, Room>) os.readObject();
+                for(Room room : rooms.values()) {
+                    room.setPacketManager(new ServerRoomPacketManager(room));
+                }
                 logger.info("Rooms loaded");
                 os.close();
             } catch (IOException | ClassNotFoundException ex) {
