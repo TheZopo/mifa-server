@@ -72,7 +72,9 @@ public class ServerPacketManager extends PacketManager {
     @Override
     protected void onDisconnected() {
         super.onDisconnected();
-
-        this.getUser().setConnected(false);
+        if (this.getUser() != null) {
+            logger.debug("User " + this.getUser().getNickname() + " is now deconnected");
+            this.getUser().setConnected(false);
+        }
     }
 }
