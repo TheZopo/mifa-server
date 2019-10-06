@@ -54,21 +54,6 @@ public class ServerPacketManager extends PacketManager {
                 logger.warn("User is not authenticated yet - can't join room");
             }
         }
-        else if (packet instanceof MessagePacket) {
-            logger.debug("Received MessagePacket");
-            MessagePacket messagePacket = (MessagePacket) packet;
-            if (this.getUser() != null) {
-                Message message = messagePacket.getMessage();
-                User user = this.getUser();
-                // fill more detail about message origin for other clients
-                message.setAuthorName(user.getNickname());
-                message.setAuthorId(user.getId());
-                RoomService.getInstance().broadcastMessage(message);
-            }
-            else {
-                logger.warn("User is not authenticated yet - can't send message");
-            }
-        }
         else if (packet instanceof LeaveRoomPacket) {
             logger.debug("Received LeaveRoomPacket");
             LeaveRoomPacket leaveRoomPacket = (LeaveRoomPacket) packet;
@@ -87,7 +72,9 @@ public class ServerPacketManager extends PacketManager {
     @Override
     protected void onDisconnected() {
         super.onDisconnected();
-
-        this.getUser().setConnected(false);
+        if (this.getUser() != null) {
+            logger.debug("User " + this.getUser().getNickname() + " is now deconnected");
+            this.getUser().setConnected(false);
+        }
     }
 }

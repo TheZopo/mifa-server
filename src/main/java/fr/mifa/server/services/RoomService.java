@@ -5,6 +5,9 @@ import fr.mifa.core.models.Room;
 import fr.mifa.core.models.User;
 import fr.mifa.core.network.protocol.*;
 import fr.mifa.core.services.AbstractService;
+import fr.mifa.server.network.ServerRoomPacketManager;
+import fr.mifa.server.utils.ServerProperties;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +23,7 @@ import java.util.stream.Collectors;
 public class RoomService extends AbstractService {
     private static final Logger logger = LoggerFactory.getLogger(RoomService.class);
 
+    private HashMap<String, Room> rooms;
 
     /** Singleton **/
     private RoomService()
@@ -45,8 +49,6 @@ public class RoomService extends AbstractService {
     }
     /** End Singleton **/
 
-    HashMap<String, Room> rooms;
-
     public HashMap<String, Room> getRooms() {
         return rooms;
     }
@@ -63,7 +65,9 @@ public class RoomService extends AbstractService {
         Room room = this.rooms.get(roomName);
         if (room == null) {
             //room does not exist yet, create it
-            room = new Room(roomName);
+            room = new Room(roomName, "224.0.0.1");
+            room.setPacketManager(new ServerRoomPacketManager(room));
+
             rooms.put(roomName, room);
         }
         if (UserService.getInstance().getUser(roomName).isPresent() && room.getUsers().size() == 2) {
@@ -71,7 +75,9 @@ public class RoomService extends AbstractService {
         }
         room.getUsers().add(user);
         logger.info(user.getNickname() + " joined room " + room.getName());
-        this.broadcastPacket(room, new JoinedRoomPacket(user.getNickname(), room));
+
+        JoinedRoomPacket packet = new JoinedRoomPacket(user.getNickname(), room);
+        user.getPacketManager().send(packet);
     }
 
     public void leaveRoom(User user, String roomName) {
@@ -81,32 +87,15 @@ public class RoomService extends AbstractService {
             logger.info(user.getNickname() + " left room " + room.getName());
             Packet packet = new LeftRoomPacket(user.getNickname(), room.getId());
             user.getPacketManager().send(packet);
-            this.broadcastPacket(room, packet);
         } else {
             logger.warn("Room " + roomName + " does not exist");
         }
     }
 
-    public void broadcastMessage(Message message) {
+    public void receivedMessage(Message message) {
         Room room = this.rooms.get(message.getRoomName());
         if (room != null) {
-            this.broadcastPacket(room, new MessageSentPacket(message));
             room.getHistory().add(message);
-        }
-    }
-
-    public void broadcastPacket(Room room, Packet packet) {
-        logger.info("Broadcasting  " + packet.getClass().getName() + " to room " + room.getId());
-        for (User user: room.getUsers()) {
-            if (user.getPacketManager() == null) {
-                Optional<User> correctUser = UserService.getInstance().getUser(user.getNickname());
-                if (correctUser.isPresent()) {
-                    user.setPacketManager(correctUser.get().getPacketManager());
-                }
-            }
-            if (user.getPacketManager() != null) {
-                user.getPacketManager().send(packet);
-            }
         }
     }
 
@@ -130,6 +119,9 @@ public class RoomService extends AbstractService {
         if (os != null) {
             try {
                 this.rooms = (HashMap<String, Room>) os.readObject();
+                for(Room room : rooms.values()) {
+                    room.setPacketManager(new ServerRoomPacketManager(room));
+                }
                 logger.info("Rooms loaded");
                 os.close();
             } catch (IOException | ClassNotFoundException ex) {
