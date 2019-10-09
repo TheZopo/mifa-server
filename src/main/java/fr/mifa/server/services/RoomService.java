@@ -99,6 +99,21 @@ public class RoomService extends AbstractService {
         }
     }
 
+    public void receivedReaction(ReactionPacket reactionPacket) {
+        Room room = this.rooms.get(reactionPacket.getRoomName());
+        if (room != null) {
+            Optional<Message> message = room.getHistory()
+                    .stream()
+                    .filter(x -> x.getId() == reactionPacket.getMessageId())
+                    .findFirst();
+            if (message.isPresent()) {
+                message.get().getReactions().add(reactionPacket.getReaction());
+            } else {
+                logger.warn("Message " + reactionPacket.getMessageId() + " not found");
+            }
+        }
+    }
+
     @Override
     public void saveState() {
         ObjectOutputStream os = this.getOutputStream();

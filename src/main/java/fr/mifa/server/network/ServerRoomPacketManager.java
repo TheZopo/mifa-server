@@ -1,5 +1,6 @@
 package fr.mifa.server.network;
 
+import fr.mifa.core.network.protocol.ReactionPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +26,12 @@ public class ServerRoomPacketManager extends RoomPacketManager {
 
             MessagePacket messagePacket = (MessagePacket) packet;
             RoomService.getInstance().receivedMessage(messagePacket.getMessage());
+        }
+        else if (packet instanceof ReactionPacket) {
+            logger.debug("Received ReactionPacket");
+
+            ReactionPacket reactionPacket = (ReactionPacket)packet;
+            RoomService.getInstance().receivedReaction(reactionPacket);
         }
     }
 }
